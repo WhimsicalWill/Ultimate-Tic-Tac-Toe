@@ -22,9 +22,7 @@ public class Ultimate extends JFrame {
    }
    
    public void start() {
-      //while (true) {
-         display.start();
-      //}
+      display.start();
    }
    
    public static void main(String[] args) {
