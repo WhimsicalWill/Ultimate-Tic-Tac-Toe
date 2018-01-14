@@ -40,14 +40,12 @@ public class DisplayPanel extends JPanel {
             
             if (playerOneTurn && !isGameOver()) {
                makeMove(x, y);
-               
-               if (isGameOver()) {
-                  clearBoardSelections();
-                  System.out.println("You Win");
-               }
+               repaint();
             }
          }
       });
+      
+      repaint();
    }
    
    public void makeMove(int x, int y) {
@@ -57,7 +55,7 @@ public class DisplayPanel extends JPanel {
       int moveY = clickLocation[1];
       
       // Do nothing if the click is not within the board
-      if (moveX == -1 || !isInActiveMicroboard(moveX, moveY, macroboard))
+      if (moveX == -1 || !isInActiveMicroboard(moveX, moveY, macroboard) || board[moveX][moveY] != 0)
          return;
       
       board[moveX][moveY] = 1;
@@ -354,64 +352,29 @@ public class DisplayPanel extends JPanel {
    }
    
    public void start() {
-      int playerNum;
-      
-      while (wins + ties + losses < 1000) {
-         if (playerOneTurn)
-            playerNum = 1;
-         else
-            playerNum = 2;   
+      while (!isGameOver()) {
+         System.out.println(playerOneTurn);
+         if (!playerOneTurn) {
+            State currentState = new State(board, macroboard);
+            ArrayList<Move> moves = bot.getAvailableMoves(currentState);
+            Move bestMove;
+           
+            System.out.println("Getting Best Move");
+            long startTime = System.currentTimeMillis();
+            bestMove = bot.getBestMove(moves, currentState.getBoard(), currentState.getMacroboard(), 2, 6);
+            System.out.println(System.currentTimeMillis() - startTime);
             
-         State currentState = new State(board, macroboard);
-         ArrayList<Move> moves = bot.getAvailableMoves(currentState);
-         Move bestMove;
-         boolean endGame = bot.isEndGame(currentState.getBoard(), currentState.getMacroboard(), 60);
-         
-         if (!endGame) {
-            if (playerNum == 1)
-               bestMove = bot.getBestMove(moves, currentState.getBoard(), currentState.getMacroboard(), playerNum, 4);
-            else
-               bestMove = bot.getBestMove(moves, currentState.getBoard(), currentState.getMacroboard(), playerNum, 5);
-         }
-         else {
-            if (playerNum == 1)
-               bestMove = bot.getBestMove(moves, currentState.getBoard(), currentState.getMacroboard(), playerNum, 5);
-            else
-               bestMove = bot.getBestMove(moves, currentState.getBoard(), currentState.getMacroboard(), playerNum, 4);
-         }
-         
-         int moveX = bestMove.getX();
-         int moveY = bestMove.getY();
-         
-         board[moveX][moveY] = playerNum;
-         modifyMacroboard(moveX, moveY);
-         playerOneTurn = !playerOneTurn;
-         
-         repaint();
-         
-         if (isGameOver()) {
-            int[] tMacro = transformMacroboard(macroboard);
-            if (isWin(tMacro, 1)) {
-               wins++;
-               //System.out.println("Win");
-            }
-            else if (isWin(tMacro, 2)) {
-               losses++;
-               //System.out.println("Loss");
-            }
-            else {
-               ties++;
-               //System.out.println("Tie");
-            }
-            macroboard = getStartingBoard(3, -1);
-            board = getStartingBoard(9, 0);
-            playerOneTurn = getStartingPlayer();
-            //clearBoardSelections();
+            int moveX = bestMove.getX();
+            int moveY = bestMove.getY();
+            
+            board[moveX][moveY] = 2;
+            modifyMacroboard(moveX, moveY);
+            playerOneTurn = true;
+            
+            repaint();
          }
       }
-      System.out.println(wins + " Wins");
-      System.out.println(losses + " Losses");
-      System.out.println(ties + " Ties");
-      
+      // Get rid of the white highlights on the board
+      clearBoardSelections();
    }
 }
